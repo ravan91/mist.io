@@ -807,7 +807,10 @@ def list_images(request):
 
     try:
         if conn.type in EC2_PROVIDERS:
-            images = conn.list_images(ex_image_ids = backends[backend_id].get('starred', []))
+            starred_images = backends[backend_id].get('starred', [])
+            images = []
+            if starred_images:
+                images = conn.list_images(ex_image_ids = starred_images)
             my_images = conn.list_images(ex_owner = "self")
             amazon_images = conn.list_images(ex_owner="amazon")
             for i in amazon_images+my_images:
