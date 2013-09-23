@@ -10,6 +10,9 @@ define('app/views/image_list', [
     function(MistScreen, image_list_html) {
         return MistScreen.extend({
 	        template: Ember.Handlebars.compile(image_list_html),
+	        
+	        advancedSearch: false,
+	        
 	        init: function(){
 	        	this._super();
 	        	var that=this;
@@ -60,7 +63,15 @@ define('app/views/image_list', [
 			  	    		}
 			  	    	}
 			  	    }
-		   }
+		   		}
+		   		
+		   		if ( Mist.renderedImages.content.length > 100 ) {
+		   			this.advancedSearch = true;
+		   		} else {
+		   			this.advancedSearch = false;
+		   			warn(9);
+		   		}
+		   
 			},
 			
 			isScrolledToBottom: function() {
