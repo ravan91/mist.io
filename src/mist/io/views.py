@@ -818,6 +818,7 @@ def list_images(request):
                     images.append(i)
                     
             for image in images:
+                image.name = EC2_IMAGES[conn.type][image.id]
                 if not image.name:
                     image.name = EC2_IMAGES[conn.type].get(image.id, image.id)
                 
