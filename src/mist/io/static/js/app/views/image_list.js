@@ -99,7 +99,15 @@ define('app/views/image_list', [
   			
   			advancedSearchClicked: function() {
   				var term = $('.ui-input-search input').val();
-  				warn(term);
+			  	var items = Mist.backendsController.content;
+			  	var counter = 0;
+		  	    for (var i = 0; i < items.length; i++) {
+		  	    	for (var j = 0; j < items[i].images.content.length; j ++) {
+		  	    		if((items[i].images.content[j].name.indexOf(term) > -1 || items[i].images.content[j].id.indexOf(term) > -1) && counter <20) {
+		  	    			Mist.renderedImages.unshiftObject(items[i].images.content[j]);
+		  	    		}
+		  	    	}warn(9);
+		  	    }    				
   			}
         });
     }
