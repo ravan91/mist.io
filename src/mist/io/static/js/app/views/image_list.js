@@ -17,7 +17,7 @@ define('app/views/image_list', [
 	        	this._super();
 	        	var that=this;
 	            Ember.run.next(function(){
-					$('.ui-input-search input').on('keypress', that.filterImages);
+					$('.ui-input-search input').on('keyup', that.filterImages);
 					//add this $('ul#images-list li.node:visible').length	        
 	            });
 	            $(window).on('scroll', this.didScroll);	
