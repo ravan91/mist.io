@@ -34,13 +34,10 @@
             <a id="images-advanced-search" 
                data-role="button" 
                data-theme="b"
-               {{action advancedSearchClicked target="view"}}>Advanced search</a>
+               {{action advancedSearchClicked target="view"}}>Continue search in database...</a>
             {{#each Mist.renderedImages}}
                 {{view Mist.ImageListItemView imageBinding="this" class="node" }}
             {{/each}}
-            {{#if view.advancedSearch}}
-            	<button>Continue Search</button>
-            {{/if}}
         </ul>
 
         <div class="bottom-padding"></div>

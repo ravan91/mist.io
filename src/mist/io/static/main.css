@@ -444,6 +444,10 @@ a#mist-select-machines-button span.ui-btn-text {
     font-size: 16px;
 }
 
+#images-advanced-search {
+	display: none;
+}
+
 #machines-list .alert-icon {
     display: block;
     padding: 0px;

@@ -64,14 +64,6 @@ define('app/views/image_list', [
 			  	    	}
 			  	    }
 		   		}
-		   		
-		   		if ( Mist.renderedImages.content.length > 100 ) {
-		   			this.advancedSearch = true;
-		   		} else {
-		   			this.advancedSearch = false;
-		   			warn(9);
-		   		}
-		   
 			},
 			
 			isScrolledToBottom: function() {
@@ -84,6 +76,11 @@ define('app/views/image_list', [
   			//This is called every time we type a search term and makes sure to always have at least 10
   			//results to choose from if possible
   			filterImages: function(){
+  				if ($('.ui-input-search input').val()){
+  					$("#images-advanced-search").css("display", "block");
+  				}else {
+  					$("#images-advanced-search").css("display", "none");  					
+  				}
   				if ($('ul#images-list li.node:visible').length < 10) {
 			  	   var items = Mist.backendsController.content;
 			  	   var counter = 0;
@@ -101,7 +98,8 @@ define('app/views/image_list', [
   			},
   			
   			advancedSearchClicked: function() {
-                Mist.notificationController.notify("Well, we haven't wrote any code for that yet... have a nice day! :)");  			    
+  				var term = $('.ui-input-search input').val();
+  				warn(term);
   			}
         });
     }
