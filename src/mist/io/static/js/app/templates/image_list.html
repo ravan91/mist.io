@@ -31,6 +31,10 @@
         data-inset="true"
         data-theme="c"
         data-filter-placeholder="Filter images...">
+            <a id="images-advanced-search" 
+               data-role="button" 
+               data-theme="b"
+               {{action advancedSearchClicked target="view"}}>Advanced search</a>
             {{#each Mist.renderedImages}}
                 {{view Mist.ImageListItemView imageBinding="this" class="node" }}
             {{/each}}

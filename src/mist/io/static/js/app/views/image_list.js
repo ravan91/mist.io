@@ -98,9 +98,11 @@ define('app/views/image_list', [
 			  	    	}
 			  	    }  					
   				}
-
+  			},
+  			
+  			advancedSearchClicked: function() {
+                Mist.notificationController.notify("Well, we haven't wrote any code for that yet... have a nice day! :)");  			    
   			}
-           
         });
     }
 );
