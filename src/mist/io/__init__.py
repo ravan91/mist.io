@@ -1,6 +1,7 @@
 """Routes and wsgi app creation"""
 import yaml
 import logging
+import json
 
 import requests
 
@@ -28,6 +29,14 @@ def main(global_config, **settings):
         ret = requests.post(settings['core_uri'] + '/auth', params=payload, verify=False)
         if ret.status_code == 200:
             settings['auth'] = 1
+            ret = json.loads(ret.content)
+            settings['current_plan'] = ret.get('current_plan',{})
+            user_details = ret.get('user_details', {})
+            settings['name'] = user_details.get('name', '')
+            settings['company_name'] = user_details.get('company_name', '')            
+            settings['country'] = user_details.get('country', '')            
+            settings['number_of_servers'] = user_details.get('number_of_servers', '')            
+            settings['number_of_people'] = user_details.get('number_of_people', '')                                                
         else:
             settings['auth'] = 0
 
@@ -41,30 +50,30 @@ def main(global_config, **settings):
 
     config.add_route('machines', '/backends/{backend}/machines')
     config.add_route('machine', '/backends/{backend}/machines/{machine}')
-    config.add_route('machine_metadata',
-                     '/backends/{backend}/machines/{machine}/metadata')
-    config.add_route('probe',
-                     '/backends/{backend}/machines/{machine}/probe')
-    config.add_route('shell',
-                     '/backends/{backend}/machines/{machine}/shell')
+    config.add_route('machine_metadata', '/backends/{backend}/machines/{machine}/metadata')
+    config.add_route('probe', '/backends/{backend}/machines/{machine}/probe')
+    config.add_route('shell', '/backends/{backend}/machines/{machine}/shell')
 
     config.add_route('monitoring', '/monitoring')
-    config.add_route('update_monitoring',
-                     '/backends/{backend}/machines/{machine}/monitoring')
+    config.add_route('update_monitoring', '/backends/{backend}/machines/{machine}/monitoring')
 
     config.add_route('images', '/backends/{backend}/images')
     config.add_route('image', '/backends/{backend}/images/{image}')
     config.add_route('sizes', '/backends/{backend}/sizes')
     config.add_route('locations', '/backends/{backend}/locations')
-
+    
     config.add_route('keys', '/keys')
-    config.add_route('key', '/keys/{key}')
-
+    config.add_route('key_action', '/keys/{key}')
+    config.add_route('key_generate', '/key_generate')
+    config.add_route('key_association', '/backends/{backend}/machines/{machine}/keys/{key}')
+    
     config.add_route('rules', '/rules')
     config.add_route('rule', '/rules/{rule}')
-
+    config.add_route('check_auth', '/auth')
+    config.add_route('account', '/account')
+    
     config.scan()
-
+    
     app = config.make_wsgi_app()
     app = ShellMiddleware(app)
 

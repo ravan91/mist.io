@@ -34,14 +34,21 @@ define('app/controllers/images', [
 
             init: function() {
                 this._super();
-
-                if (this.backend.error && this.backend.state == 'offline'){
-                    return
+                
+                if (!this.backend.enabled) {
+                    return;
+                }
+                else if (this.backend.error && this.backend.state == 'offline'){
+                    return;
                 }
                 
                 this.backend.set('state', 'waiting');
+                this.backend.set('loadingImages', true);
                 var that = this;
                 $.getJSON('/backends/' + this.backend.id + '/images', function(data) {
+                    if (!that.backend.enabled) {
+                        return;
+                    }
                     var content = new Array();
                     
                     that.set('renderIndex', 0);
@@ -65,7 +72,7 @@ define('app/controllers/images', [
                     if (that.backend.error){
                         that.backend.set('error', false);
                     }
-                    
+                    that.backend.set('loadingImages', false);
                 }).error(function() {
                     Mist.notificationController.notify("Error loading images for backend: " + that.backend.title);
                     if (that.backend.error){
@@ -78,7 +85,8 @@ define('app/controllers/images', [
                         Ember.run.later(that, function(){
                             this.init();
                         }, that.backend.poll_interval); 
-                    }   
+                    }
+                    that.backend.set('loadingImages', false);
                 });
             }
         });

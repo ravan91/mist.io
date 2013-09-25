@@ -43,7 +43,7 @@ define('app/views/machine_add_dialog', [
                 $('.select-location-collapsible span.ui-btn-text').text('Select Location');      
                 
                 $('.select-provider-collapsible').trigger('collapse');                
-                return false;               
+                return false;
             },
                       
             selectImage: function(image){
@@ -156,10 +156,16 @@ define('app/views/machine_add_dialog', [
 
             newMachineClicked: function() {
                 //FIXME there should be a way to bind the action directly to the controller
-                Mist.machineAddController.newMachine();
-                $('.dialog-add').panel('close');
-                Mist.Router.router.transitionTo('machines');
-                this.clear();
+                var providerName = $('.select-provider-collapsible span.ui-btn-text').text();
+                var machineName = $('#create-machine-name').val();
+                if ((providerName == 'NephoScale') && ((machineName.length > 64)||(machineName.indexOf(' ') >= 0))) {
+                    Mist.notificationController.timeNotify("Server name in NephoScale must start with a letter, can contain mixed alpha-numeric characters, hyphen ('-') and underscore ('_') characters, cannot exceed 64 characters, and can end with a letter or a number.", 7000);
+                } else { 
+                    Mist.machineAddController.newMachine();
+                    $('.dialog-add').panel('close');
+                    Mist.Router.router.transitionTo('machines');
+                    this.clear();
+                }
             },
 
             generateKey: function() {

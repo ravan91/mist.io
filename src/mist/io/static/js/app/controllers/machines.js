@@ -11,29 +11,32 @@ define('app/controllers/machines', [
     function(Machine) {
         return Ember.ArrayController.extend({
             backend: null,
-
             content: null,
 
             init: function() {
                 this._super();
-                this.set('content', []),
+                this.set('content', []);
                 this.refresh();
             },
 
             refresh: function(){
 
                 if(!this.backend.enabled){
-                    this.backend.set('state', 'offline');
-                    this.clear();
                     return;
                 }
 
                 var that = this;
 
-                
                 this.backend.set('state', 'waiting');
-
+                this.backend.set('loadingMachines', true);
                 $.getJSON('/backends/' + this.backend.id + '/machines', function(data) {
+                    if (!that.backend.enabled) {
+                        return;
+                    }
+                    if (typeof Mist.monitored_machines === 'undefined') {
+                        //check monitoring failed, re-run. This shall be moved though, since here it gets executed just 2 times
+                        Mist.backendsController.checkMonitoring();
+                    }
 
                     data.forEach(function(item){
                         var found = false;
@@ -41,11 +44,7 @@ define('app/controllers/machines', [
                         log("item id: " + item.id);
 
                         that.content.forEach(function(machine){
-                            if (typeof Mist.monitored_machines === 'undefined') {
-                                //check monitoring failed, re-run. This shall be moved though, since here it gets executed just 2 times
-                                Mist.backendsController.checkMonitoring();
-                            }
-                            else {
+                            if (typeof Mist.monitored_machines !== 'undefined') {
                                 Mist.monitored_machines.forEach(function(machine_tuple){
                                     backend_id = machine_tuple[0];
                                     machine_id = machine_tuple[1];
@@ -54,7 +53,7 @@ define('app/controllers/machines', [
                                         return false;
                                     }
                                  });
-                             }
+                            }
 
                             if (machine.id == item.id || (machine.id == -1 && machine.name == item.name)) {
                                 found = true;
@@ -69,7 +68,7 @@ define('app/controllers/machines', [
                                 machine.set('can_reboot', item.can_reboot);
                                 machine.set('can_tag', item.can_tag);
                                 //FIXME check for changes
-                                machine.tags.set('content', item.tags)
+                                machine.tags.set('content', item.tags);
                                 machine.set('public_ips', item.public_ips);
                                 machine.set('extra', item.extra);
                                 return false;
@@ -79,10 +78,9 @@ define('app/controllers/machines', [
                         if (!found && !that.backend.create_pending) {
                             item.backend = that.backend;
                             var machine = Machine.create(item);
-                            machine.tags.set('content', item.tags)
+                            machine.tags.set('content', item.tags);
                             that.pushObject(machine);
                         }
-
                     });
                     
                     that.content.forEach(function(item) {
@@ -108,8 +106,8 @@ define('app/controllers/machines', [
                     } else {
                         that.backend.set('state', 'offline');
                     }
-                    
-                    Mist.backendsController.getMachineCount()
+
+                    Mist.backendsController.getMachineCount();
                     
                     Ember.run.later(that, function(){
                         this.refresh();
@@ -118,6 +116,8 @@ define('app/controllers/machines', [
                     if (that.backend.error) {
                         that.backend.set('error', false);
                     }
+                    
+                    that.backend.set('loadingMachines', false);
                     
                 }).error(function(e) {
                     Mist.notificationController.notify("Error loading machines for backend: " +
@@ -132,7 +132,8 @@ define('app/controllers/machines', [
                         Ember.run.later(that, function(){
                             this.refresh();
                         }, that.backend.poll_interval); 
-                    }   
+                    }
+                    that.backend.set('loadingMachines', false);
                 });
             },
 
@@ -171,12 +172,13 @@ define('app/controllers/machines', [
                 item.id = -1;
 
                 var machine = Machine.create(item);
+                machine.keys.addObject(key);
+                
                 this.addObject(machine);
                 Ember.run.next(function(){
                     $('#machines-list input.ember-checkbox').checkboxradio();    
                 });
                 var that = this;
-
                 $.ajax({
                     url: 'backends/' + this.backend.id + '/machines',
                     type: 'POST',
@@ -186,27 +188,26 @@ define('app/controllers/machines', [
                     success: function(data) {
                         info('Successfully sent create machine', name, 'to backend',
                                     that.backend.title);
-                        warn(data);
                         if (that.backend.error) {
                             that.backend.set('error', false);
-                        }     
+                        }
                         machine.set("id", data.id);
                         machine.set("name", data.name);
                         machine.set("public_ips", data.public_ips);
                         machine.set("private_ips", data.private_ips);
                         machine.set("extra", data.extra);
                         that.backend.set('create_pending', false);
-                        key.machines.addObject([that.backend.id, data.id]);
-                        machine.keys.addObject(key);
+                        var key_machines = key.machines;
+                        key_machines.push([machine.backend.id, machine.id]);
+                        key.set('machines', key_machines);
+                        machine.probe(key.name);
                     },
                     error: function(jqXHR, textstate, errorThrown) {
-                        Mist.notificationController.notify('Error while sending create machine' +
-                                name + ' to backend ' + that.backend.title);
+                        Mist.notificationController.timeNotify(jqXHR.responseText, 15000);
                         error(textstate, errorThrown, 'while creating machine', that.name);
                         that.removeObject(machine);
                         that.backend.set('error', textstate);
                         that.backend.set('create_pending', false);
-
                     }
                 });
             }

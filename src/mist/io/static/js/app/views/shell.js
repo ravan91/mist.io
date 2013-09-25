@@ -15,9 +15,12 @@ function(shell_html) {
         template: Ember.Handlebars.compile(shell_html),
 
         shellOutputItems: Ember.ArrayController.create(),
-
+        
         availableCommands: [], //"dmesg", "uptime", "uname", "ls", "reboot", "whoami", "ifconfig" ],
-
+        
+        commandHistory: new Array(),
+        commandHistoryIndex: -1,
+        
         didInsertElement: function() {
             if ('localStorage' in window && window['localStorage'] !== null) {
                 var stored = localStorage['shellHistory'];
@@ -46,15 +49,20 @@ function(shell_html) {
                 var machine = this.machine;
             }
 
-            if (!machine || !machine.hasKey || !this.command) {
+            if (!machine || !machine.probed || !this.command) {
                 return;
             }
 
             var that = this;
             var command = this.command;
+            
+            this.commandHistory.pop();
+            this.commandHistory.push(command);
+            this.commandHistory.push('');
+            this.commandHistoryIndex = this.commandHistory.length - 1;
 
             machine.shell(command, function(output) {
-
+                
                 if(!that.shellOutputItems.content){
                     that.shellOutputItems.set('content', new Array());
                 }

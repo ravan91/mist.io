@@ -48,7 +48,6 @@ define( 'app', [
     'app/controllers/keys',
     'app/controllers/rules',
     'app/views/home',
-    'app/views/count',
     'app/views/backend_button',
     'app/views/backend_add',
     'app/views/backend_edit',
@@ -57,7 +56,6 @@ define( 'app', [
     'app/views/machine_add_dialog',
     'app/views/machine',
     'app/views/machine_list',
-    'app/views/machine_key_list_item',
     'app/views/confirmation_dialog',
     'app/views/machine_actions_dialog',
     'app/views/single_machine_actions_dialog',
@@ -65,14 +63,12 @@ define( 'app', [
     'app/views/image_list',
     'app/views/delete_tag',
     'app/views/machine_tags_dialog',
-    'app/views/machine_monitoring_dialog',
+    'app/views/machine_manage_keys',
     'app/views/key_list_item',
     'app/views/key_list',
     'app/views/key',
     'app/views/key_add_dialog',
-    'app/views/key_associate_dialog',
     'app/views/key_priv_dialog',
-    'app/views/key_machine_list_item',
     'app/views/rule',
     'app/views/user_menu',
     'text!app/templates/machine.html',
@@ -92,7 +88,6 @@ define( 'app', [
                 KeysController,
                 RulesController,
                 Home,
-                Count,
                 BackendButton,
                 BackendAdd,
                 EditBackend,
@@ -101,7 +96,6 @@ define( 'app', [
                 MachineAddDialog,
                 SingleMachineView,
                 MachineListView,
-                MachineKeyListItem,
                 ConfirmationDialog,
                 MachineActionsDialog,
                 SingleMachineActionsDialog,
@@ -109,14 +103,12 @@ define( 'app', [
                 ImageListView,
                 DeleteTagView,
                 MachineTagsDialog,
-                MachineMonitoringDialog,
+                MachineManageKeys,
                 KeyListItemView,
                 KeyListView,
                 SingleKeyView,
                 KeyAddDialog,
-                KeyAssociateDialog,
                 KeyPrivDialog,
-                KeyMachineListItem,
                 RuleView,
                 UserMenuView,
                 machine_html,
@@ -244,7 +236,7 @@ define( 'app', [
         };
           
         App.SingleMachineView = SingleMachineView;
-        App.MachineListView = MachineListView
+        App.MachineListView = MachineListView;
         App.UserMenuView = UserMenuView;
         App.KeyListView = KeyListView;
         App.KeyListItemView = KeyListItemView;
@@ -253,8 +245,7 @@ define( 'app', [
         App.AddKeyView = KeyAddDialog;
         App.KeyPrivDialog = KeyPrivDialog;
         App.MachineAddView = MachineAddDialog;
-        App.KeyAssociateDialog = KeyAssociateDialog;
-        App.MachineKeyListItemView = MachineKeyListItem;
+        App.MachineManageKeys = MachineManageKeys;
         
         App.set('backendAddController', BackendAddController.create());
         App.set('backendsController', BackendsController.create());
@@ -289,6 +280,7 @@ define( 'app', [
         });
 
         App.ShellTextField = Ember.TextField.extend({
+
             attributeBindings: [
                 'name',
                 'data-theme',
@@ -297,6 +289,40 @@ define( 'app', [
 
             insertNewline: function() {
                 this._parentView.submit();
+            },
+            
+            keyDown: function(event, view) {
+                var parent = this._parentView;
+                var inputField = '.shell-input div.ui-input-text input';
+                
+                if (event.keyCode == 38 ) { // Up Key
+                    if (parent.commandHistoryIndex > -1) {
+                        if (parent.commandHistoryIndex > 0) {
+                            parent.commandHistoryIndex--;
+                        }
+                        $(inputField).val(parent.commandHistory[parent.commandHistoryIndex]);
+                        
+                    }
+                } else if (event.keyCode == 40) { // Down key
+                    if (parent.commandHistoryIndex < parent.commandHistory.length) {
+                        if (parent.commandHistoryIndex < parent.commandHistory.length - 1) {
+                            parent.commandHistoryIndex++;
+                        }
+                        $(inputField).val(parent.commandHistory[parent.commandHistoryIndex]);
+                    }
+                } else if (event.keyCode == 9) { // Tab key
+                    // TODO: Autocomplete stuff...
+                } else { 
+                    Ember.run.next(function(){
+                        parent.commandHistory[parent.commandHistoryIndex] = parent.command;
+                    });      
+                }
+                
+                if (event.keyCode == 38 || event.keyCode == 40 || event.keycode == 9) { // Up or Down or Tab
+                    if(event.preventDefault) {
+                        event.preventDefault();
+                    }
+                }   
             }
         });
 
@@ -313,9 +339,9 @@ define( 'app', [
         
             keyUp: function() {
                 if (this.value && this.value.length > 0) {
-                    $('#tag-add').removeClass('ui-disabled')
+                    $('#tag-add').removeClass('ui-disabled');
                 } else {
-                    $('#tag-add').addClass('ui-disabled')
+                    $('#tag-add').addClass('ui-disabled');
                 }
             }
 
@@ -330,7 +356,6 @@ define( 'app', [
         });
 
         App.HomeView = Home;
-        App.CountView = Count;
         App.BackendButtonView = BackendButton;
         App.BackendAddView = BackendAdd;
         App.EditBackendView = EditBackend;
@@ -340,12 +365,10 @@ define( 'app', [
 
         App.DeleteTagView = DeleteTagView;
         App.RuleView = RuleView;
-        App.KeyMachineListItemView = KeyMachineListItem;
         App.MachineTagsDialog = MachineTagsDialog;
         App.ShellDialog = Shell;
         App.PowerDialog = SingleMachineActionsDialog;
         App.MachineActionsDialog = MachineActionsDialog;
-        App.MachineMonitoringDialog = MachineMonitoringDialog;
         App.MachineListView = MachineListView;
 
         App.set('renderedImages', Ember.ArrayController.create());
