@@ -350,7 +350,6 @@ def create_machine(request):
     through mist.io and those from the Linode interface.
 
     """
-    #import pdb;pdb.set_trace()
     try:
         conn = connect(request)
     except:
