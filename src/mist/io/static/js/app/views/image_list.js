@@ -99,15 +99,30 @@ define('app/views/image_list', [
   			
   			advancedSearchClicked: function() {
   				var term = $('.ui-input-search input').val();
-			  	var items = Mist.backendsController.content;
-			  	var counter = 0;
-		  	    for (var i = 0; i < items.length; i++) {
-		  	    	for (var j = 0; j < items[i].images.content.length; j ++) {
-		  	    		if((items[i].images.content[j].name.indexOf(term) > -1 || items[i].images.content[j].id.indexOf(term) > -1) && counter <20) {
-		  	    			Mist.renderedImages.unshiftObject(items[i].images.content[j]);
-		  	    		}
-		  	    	}warn(9);
-		  	    }    				
+  				warn(term);
+  				var payload = {
+  					'search_term':term
+  				};
+  				//for (var i = 0; i < Mist.backendsController.length; i++){
+	  				var backend_id = Mist.backendsController.content[1].id;
+	                $.ajax({
+	                    url: '/backends/' + backend_id + '/images',
+	                    type: "GET",
+	                    //contentType: "application/json",
+	                    //dataType: "json",
+	                    headers: { "cache-control": "no-cache" },
+	                    data: payload,
+	                    success: function(data) {
+	                        for (var j =0; j< data.length; j ++){
+	                        	Mist.renderedImages.content.unshiftObject(data[j]);
+	                        }
+	                    },
+	                    error: function(jqXHR, textstate, errorThrown) {
+	                        Mist.notificationController.notify('Error while searching for term: ' + jqXHR.responseText);
+	                        error(textstate, errorThrown, ' while searching term');
+	                    }
+	                });
+	             //}			
   			}
         });
     }

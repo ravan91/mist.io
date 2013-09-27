@@ -951,7 +951,10 @@ def probe(request):
 
 @view_config(route_name='images', request_method='GET', renderer='json')
 def list_images(request):
-    """List images from each backend."""
+    """List images from each backend. 
+    Furthermore if a search_term is provided, we loop through each
+    backend and search for that term in the ids and the names of 
+    the community images"""
     try:
         conn = connect(request)
     except:
@@ -963,28 +966,43 @@ def list_images(request):
         backends = request.environ['beaker.session']['backends']
     except:
         backends = request.registry.settings.get('backends', {})
-
-    try:
+    
+    term = request.params.get('search_term')
+    
+    if term:
         if conn.type in EC2_PROVIDERS:
-            starred_images = backends[backend_id].get('starred', [])
-            images = []
-            if starred_images:
-                images = conn.list_images(ex_image_ids = starred_images)
-            my_images = conn.list_images(ex_owner = "self")
-            amazon_images = conn.list_images(ex_owner="amazon")
-            for i in amazon_images+my_images:
-                if i not in images: 
+            images=[]
+            #import pdb; pdb.set_trace()            
+            community_images = conn.list_images(ex_owner="aws-marketplace")
+            for i in community_images:
+                if term in i.id or term.lower() in i.name.lower():
                     images.append(i)
-                    
+            #import pdb;prb.set_trace()
             for image in images:
-                #image.name = EC2_IMAGES[conn.type][image.id]
-                #if not image.name:
-                #    image.name = EC2_IMAGES[conn.type].get(image.id, image.id)
-                image.name = EC2_IMAGES[conn.type].get(image.id, image.name)
-        else:
-            images = conn.list_images()
-    except:
-        return Response('Backend unavailable', 503)
+                image.name = EC2_IMAGES[conn.type].get(image.id, image.name)                          
+    else:
+        try:
+            if conn.type in EC2_PROVIDERS:
+                starred_images = backends[backend_id].get('starred', [])
+                images = []
+                if starred_images:
+                    images = conn.list_images(ex_image_ids = starred_images)
+                my_images = conn.list_images(ex_owner = "self")
+                amazon_images = conn.list_images(ex_owner="amazon")
+                for i in amazon_images+my_images:
+                    if i not in images: 
+                        images.append(i)
+                        
+                for image in images:
+                    #image.name = EC2_IMAGES[conn.type][image.id]
+                    #if not image.name:
+                    #    image.name = EC2_IMAGES[conn.type].get(image.id, image.id)
+                    image.name = EC2_IMAGES[conn.type].get(image.id, image.name)
+            else:
+                images = conn.list_images()
+        except:
+            return Response('Backend unavailable', 503)
+    
 
     ret = []
     for image in images:
